@@ -43,7 +43,7 @@ for filename in os_sorted(os.listdir(directory))[-3:]:
         ax2.plot(df["t"] / 86400 / 365.25, -90 + (df["thetas"] * 180 / np.pi), linewidth=1, c="blue", label="p. night",)
         
         ax2.plot(df["t"] / 86400 / 365.25, df["thetas"] * 180 / np.pi, linewidth=1, c="orange", label="Sun")
-        ax2.legend()
+        #ax2.legend()
 
         ax3.plot( df["lambda"] * 180 / np.pi,df["theta"] * 180 / np.pi,linewidth=1 ,c="k")
         
@@ -71,6 +71,8 @@ for filename in os_sorted(os.listdir(directory))[-3:]:
         ax3.hlines(-23.5, -180, 180, color="r")
         ax3.hlines(23.5, -180, 180, color="r")
         ax3.set_xlim(-180, 180)
+        ax3.set_ylim(-90, 90)
+
         #ax1.set_ylabel("Longitude (deg)")
         ax2.set_ylabel("Latitude (deg)")
         
