@@ -10,7 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from natsort import os_sorted
-
+from time import time
 import os
 # assign directory
 directory = '../data'

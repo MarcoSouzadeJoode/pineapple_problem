@@ -87,6 +87,7 @@ void simulation_step(struct walker *w, struct planet *p, struct simulation_param
 
 
     // choose simple vs complicated astronomy setting
+
     Rsun_inc_quat(p, sim);
     //Rsun_simple_quat(p, sim); 
 
@@ -147,6 +148,18 @@ int main() {
 
 
 void sim_init(struct walker *w, struct planet *p, struct simulation_parameters *sim) {
+    char basefilename[] = "data/RES_";
+    char fullfilename[250];
+    char datetime[100];
+
+    time_t rawtime;
+    struct tm *timeinfo;
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    strftime(datetime, sizeof(datetime), "%Y-%m-%d_%H-%M-%S", timeinfo);
+    strcpy(fullfilename, basefilename);
+    strcat(fullfilename, datetime);
+
     w->r.w = 0;
     w->r.x = 0.5;
     w->r.y = 0;
@@ -156,10 +169,10 @@ void sim_init(struct walker *w, struct planet *p, struct simulation_parameters *
     
 
     p->radius = 6e6;
-    p->omega = 2*PI / 86146;
+    p->omega = -2*PI / 86146;
     p->OMG = p->omega / 365.25;
-    p->epsilon = 23.5 * PI / 180.0;
-    p->theta_0 = 0;
+    p->epsilon = 30 * PI / 180.0;
+    p->theta_0 = PI;
 
 
     p->rsun.w = 0;
@@ -173,11 +186,12 @@ void sim_init(struct walker *w, struct planet *p, struct simulation_parameters *
     q_to_polar(&(w->r), &(w->radius), &(w->lambda), &(w->theta));
     q_to_polar(&(p->rsun), &(p->rs), &(p->lambda_s), &(p->theta_s));
 
-    sim->N = 100000;
+    sim->N = 1000000;
     sim->t = 0;
     sim->dt = 100; // s
 
-    strncpy(sim->filename, "data/RES", sizeof(sim->filename) - 1);
+
+    strncpy(sim->filename, fullfilename, sizeof(sim->filename) - 1);
     sim->filename[sizeof(sim->filename) - 1] = '\0';
 
     w->C = cos(w->v * sim->dt / p->radius / 2.0);
