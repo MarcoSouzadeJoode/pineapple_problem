@@ -18,7 +18,7 @@ directory = '../data'
 
 # iterate over files in
 # that directory
-for filename in os_sorted(os.listdir(directory))[:]:
+for filename in os_sorted(os.listdir(directory))[-3:]:
     f = os.path.join(directory, filename)
     # checking if it is a file
     if os.path.isfile(f) and not f.endswith("metadata"):
@@ -45,7 +45,7 @@ for filename in os_sorted(os.listdir(directory))[:]:
         ax2.plot(df["t"] / 86400 / 365.25, df["thetas"] * 180 / np.pi, linewidth=1, c="orange", label="Sun")
         ax2.legend()
 
-        ax3.plot( df["lambda"] * 180 / np.pi,df["theta"] * 180 / np.pi,linewidth=0.1 ,c="k")
+        ax3.plot( df["lambda"] * 180 / np.pi,df["theta"] * 180 / np.pi,linewidth=1 ,c="k")
         
         ax3.plot( df["lambdas"] * 180 / np.pi,df["thetas"] * 180 / np.pi, linewidth=1,alpha=0.5, c="orange")
         #2.legend()
@@ -80,5 +80,5 @@ for filename in os_sorted(os.listdir(directory))[:]:
         ax3.set_xlabel("Longitude (deg)")
         ax3.set_ylabel("Latitude (deg)")
         plt.tight_layout()
-        plt.savefig(f"../plots/{filename}.plot.png", dpi=200)
+        plt.savefig(f"../plots/{filename}.plot.png", dpi=100)
         plt.show()
