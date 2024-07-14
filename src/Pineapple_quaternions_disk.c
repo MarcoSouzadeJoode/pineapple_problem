@@ -9,7 +9,32 @@
 #define PI 3.14159265358979
 #define dim 3
 
+/*
+Above human wandering, the sun never sets...
+-- Lao'c, ao Te Ting
+
+*/
+
+
 struct walker {
+    /*
+    Stores information about the walker on the planet.
+    The walker walks with a constant speed towards the Sun.
+    His position is recored using a unit vector,
+    coded using the vector part of the quaternion r;
+    The polar representation of this position vector
+    uses the radius and two spherical coordinates.
+    (radius, theta, lambda).
+
+    The velocity of the walker is recored as v in m/s,
+    and is recalculated into geodesic arc-length (th_mov).
+
+    As half of the sine and cosine of th_mov are 
+    used in the rotation quaternions (versors) to shift
+    the current position of the walker, they are pre-calculated
+    and stored. 
+
+    */
     struct quaternion r;
     double radius; // typically 1.00
     double theta; // latitude
@@ -22,27 +47,43 @@ struct walker {
 };
 
 struct planet {
+    /*
+    The position of the sun is stored as a vector
+    (i.e., a pure quaternion) rsun. This position is
+    calculated from astronomy.
+
+    The rotation needed to move from the current walker's
+    position (walker.r) to his new position is represented
+    using the quaternion planet.versor .
+
+    The spherical coordinates of the sun are represented using
+    rs, theta_s and lambda_s -- coordinates of the sub-solar point.
+
+    the struct planet also records the parameters of the planet
+    and the general astronomy, i.e., the rotational and orbital
+    angular velocities, the starting ecliptic longitude of the sun theta_0,
+    the obliquity of the orbit etc.
+    */
     struct quaternion rsun;
     struct quaternion versor;
-    double radius;
+    double radius; // radius of the planet
     double rs;
     double theta_s;
-    double lambda_s;
-    double omega;
-    double OMG; // orbital omega
+    double lambda_s; //spherical coords. of the sub-solar point
+    double omega; // sidereal angular velocity of the s
+    double OMG; // orbital angular velocity
     double theta_0;
     double epsilon; // obliquity
     double CEPS;
     double SEPS;
-    double oblateness; //non-sphericity
 };
 
 struct simulation_parameters {
     long N;
-    double t;
-    double dt;
-    double cos_z;
-    double alpha;
+    double t; // current time
+    double dt; //time step
+    double cos_z; // cosine of zenit angle
+    double alpha; // parameters used in different implementation
     double beta;
     char filename[64];
 };
@@ -51,18 +92,13 @@ void sim_init(struct walker *w, struct planet *p, struct simulation_parameters *
 void print_to_file(struct walker *w, struct planet *p, struct simulation_parameters *sim, FILE *file);
 void print_header(struct walker *w, struct planet *p, struct simulation_parameters *sim, FILE *file, FILE *metadata);
 
-void Rsun_inc(double *rsun, double t, double omega, double theta_0){
-    // klíčové slovo: https://en.wikipedia.org/wiki/Euler_angles
-    double epsilon = 23.5 * PI / 180.0;
-    double OMG = 6.263185 / 365.25 / 86400;
-    rsun[0] = +cos(OMG*t + theta_0)*cos(omega*t) + sin(OMG*t + theta_0)*sin(omega*t)*cos(epsilon);
-    rsun[1] = +cos(OMG*t + theta_0)*sin(omega*t) - sin(OMG*t + theta_0)*cos(omega*t)*cos(epsilon);
-    rsun[2] = -sin(OMG*t + theta_0)*sin(epsilon);
-}
 
 void Rsun_inc_quat(struct planet *p, struct simulation_parameters *sim){
-    // klíčové slovo: https://en.wikipedia.org/wiki/Euler_angles
-    // toto lze ještě předělat do kvaternionů
+    /*
+    Calculate the cartesian coordinates of the sub-solar point
+    using basic astronomy, in the classic formalism
+    of Euler Angles (https://en.wikipedia.org/wiki/Euler_angles).
+    */
     double CO, Co, SO, So;
     CO = cos(p->OMG*sim->t + p->theta_0);
     SO = sin(p->OMG*sim->t + p->theta_0);
@@ -76,6 +112,10 @@ void Rsun_inc_quat(struct planet *p, struct simulation_parameters *sim){
 
 
 void Rsun_simple_quat(struct planet *p, struct simulation_parameters *sim) {
+    /*
+    Calculating the solar position for a simplified (i.e., original) version
+    of the problem, with zero axial inclination.
+    */
     p->rsun.w = 0;
     p->rsun.x = +cos(p->omega * sim->t);
     p->rsun.y = -sin(p->omega * sim->t);
@@ -84,9 +124,8 @@ void Rsun_simple_quat(struct planet *p, struct simulation_parameters *sim) {
 
 void simulation_step(struct walker *w, struct planet *p, struct simulation_parameters *sim){
     struct quaternion Q = {0,0,0,0}, Qbar={0,0,0,0}, Q_temp={0,0,0,0};
-
-
     // choose simple vs complicated astronomy setting
+    // just comment out the astronomy setting you dont want :D
 
     Rsun_inc_quat(p, sim);
     //Rsun_simple_quat(p, sim); 
@@ -94,24 +133,38 @@ void simulation_step(struct walker *w, struct planet *p, struct simulation_param
     // product of two versors: (-dot product, +cross product)
     Q = q_mult(&(w->r), &(p->rsun));
 
-    // funguje to takto, ale nechápu proč tam není opačné znaménko
+    // checking sun above horizon:
     if (Q.w < 0) {
         Q.w = 0;
         q_normalize(&Q);
+
+        // rescale versor
         Q.w  = w->C;
         Q.x *= -w->S;
         Q.y *= -w->S;
         Q.z *= -w->S;
-        
+
+        // perform quaternion rotation
         Qbar = q_inverse(&Q);
         Q_temp = q_mult(&(w->r), &Q);
         w->r = q_mult(&Qbar, &Q_temp);
-        //q_normalize(&(w->r));
     }
     
 }
 
 void simulation(struct walker *w, struct planet *p, struct simulation_parameters *sim) {
+    /*
+    Perform the solar pilgramige.
+    Saving simulation metedata, i.e., astronomy & sim. parameters.
+    The data is saved after each simulation step, saving to memory was impractical
+    for long simulations.
+
+    This approach has constant space complexity, overwriting data in previous steps,
+    which is passed by reference through the walker, planet and sim structs.
+
+    Polar conversion can be turned off for faster computations, and can be
+    for example logged once every K iterations. 
+    */
     FILE *file = fopen(sim->filename, "w");
     FILE *metadata = fopen(strcat(sim->filename, "_metadata"), "w");
     print_header(w, p, sim, file, metadata);
@@ -121,7 +174,7 @@ void simulation(struct walker *w, struct planet *p, struct simulation_parameters
         simulation_step(w, p, sim);
         q_to_polar(&(w->r), &(w->radius), &(w->lambda), &(w->theta));
         q_to_polar(&(p->rsun), &(p->rs), &(p->lambda_s), &(p->theta_s));
-        print_to_file(w, p, sim, file); //problém s konst?
+        print_to_file(w, p, sim, file);
         sim->t += sim->dt;
     }
 
