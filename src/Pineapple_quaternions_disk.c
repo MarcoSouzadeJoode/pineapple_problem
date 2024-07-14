@@ -217,14 +217,14 @@ void sim_init(struct walker *w, struct planet *p, struct simulation_parameters *
     w->r.x = 0.01;
     w->r.y = 0;
     w->r.z = 1.0;
-    w->v = 2000; // m/s
+    w->v = 10; // m/s
 
     
 
     p->radius = 6e6;
     p->omega = -2*PI / 86146;
     p->OMG = p->omega / 365.25;
-    p->epsilon = 0 * PI / 180.0;
+    p->epsilon = 23.5 * PI / 180.0;
     p->theta_0 = PI;
 
 
@@ -239,9 +239,9 @@ void sim_init(struct walker *w, struct planet *p, struct simulation_parameters *
     q_to_polar(&(w->r), &(w->radius), &(w->lambda), &(w->theta));
     q_to_polar(&(p->rsun), &(p->rs), &(p->lambda_s), &(p->theta_s));
 
-    sim->N = 100000;
+    sim->N = 50000;
     sim->t = 0;
-    sim->dt = 10; // s
+    sim->dt = 1000; // s
 
 
     strncpy(sim->filename, fullfilename, sizeof(sim->filename) - 1);
