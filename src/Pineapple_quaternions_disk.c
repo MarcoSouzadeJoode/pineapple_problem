@@ -11,7 +11,9 @@
 
 /*
 Above human wandering, the sun never sets...
--- Lao'c, ao Te Ting
+-- Lao'c, Tao Te Ching
+
+https://what-if.xkcd.com/25/
 
 */
 
@@ -214,10 +216,10 @@ void sim_init(struct walker *w, struct planet *p, struct simulation_parameters *
     strcat(fullfilename, datetime);
 
     w->r.w = 0;
-    w->r.x = 0.01;
+    w->r.x = 0.5;
     w->r.y = 0;
     w->r.z = 1.0;
-    w->v = 10; // m/s
+    w->v = 250; // m/s
 
     
 
@@ -239,7 +241,7 @@ void sim_init(struct walker *w, struct planet *p, struct simulation_parameters *
     q_to_polar(&(w->r), &(w->radius), &(w->lambda), &(w->theta));
     q_to_polar(&(p->rsun), &(p->rs), &(p->lambda_s), &(p->theta_s));
 
-    sim->N = 50000;
+    sim->N = 10000;
     sim->t = 0;
     sim->dt = 1000; // s
 
