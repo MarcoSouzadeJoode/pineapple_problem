@@ -5,6 +5,7 @@
 
 #include "vecmath.h"
 #include "quaternion_math.h"
+//#include "sky_traces.c"
 
 #define PI 3.14159265358979
 #define dim 3
@@ -241,9 +242,9 @@ void sim_init(struct walker *w, struct planet *p, struct simulation_parameters *
     q_to_polar(&(w->r), &(w->radius), &(w->lambda), &(w->theta));
     q_to_polar(&(p->rsun), &(p->rs), &(p->lambda_s), &(p->theta_s));
 
-    sim->N = 10000;
+    sim->N = 200000;
     sim->t = 0;
-    sim->dt = 1000; // s
+    sim->dt = 100; // s
 
 
     strncpy(sim->filename, fullfilename, sizeof(sim->filename) - 1);

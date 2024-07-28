@@ -24,7 +24,7 @@ for filename in os_sorted(os.listdir(directory))[-3:]:
     if os.path.isfile(f) and not f.endswith("metadata"):
         print(f)
         
-        df = pd.read_csv(f,delimiter="\t")
+        df = pd.read_csv("/home/marco/Documents/pineapple_problem/data/RES_2024-07-11_10-07-57",delimiter="\t")
 
         #plt.xlim(-0.02, 0.04)
         fig, (ax2, ax3) = plt.subplots(nrows=2, ncols=1)
